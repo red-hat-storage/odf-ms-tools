@@ -2,7 +2,7 @@
 
 ## About
 
-The OpenShift Data Foundation managed service is provisioned using the ROSA command line utilities. The `rosa create service` command is mechanism used for provisioning. Provisioning instantiates a _service cluster_ that provides storage to _application clusters_. Service clusters are wholly managed by Red Hat SRE teams, users cannot be created on them, and they cannot be configured with customer provided identity provider.
+The OpenShift Data Foundation managed service is provisioned using the ROSA command line utilities. The `rosa create service` command is mechanism used for provisioning. Provisioning instantiates a _service cluster_ that provides storage to _application clusters_. Service clusters are wholly managed by Red Hat SRE teams, users cannot be created on them, and they cannot be configured with a customer provided identity provider.
 
 Application clusters are clusters provisioned with `rosa create cluster` for the purpose of running customer or ISV applications. In order for an application cluster to be able to consume storage from a provisioned ODF service cluster, the ODF consumer adddon needs to be installed with `rosa install addon`.
 
@@ -15,7 +15,7 @@ Application clusters are clusters provisioned with `rosa create cluster` for the
 
 ### Resources
 
-At the onset OpenShift Data Foundation service clusters are of a fixed size, and provide 20TB of capacity after replication. Both smaller initial sizes, and the ability to scale them will come later. The service cluster is a standard ROSA cluster with the following exceptions:
+At the onset OpenShift Data Foundation service clusters are of a fixed size, and provide 20TB of usable capacity after replication. Both smaller initial sizes, and the ability to scale them will come later. The service cluster is a standard ROSA cluster with the following exceptions:
 
 * Worker instance type is fixed (m5.4xlarge)
 * Worker quantity is fixed (3)
@@ -39,13 +39,23 @@ Currently, testing has been limited to configurations where the ODF service clus
 1. Create a multi-az application cluster first, and create the service cluster in the resulting VPC
 2. Create a VPC with all the requisite AWS networking resources
 
-The first is the most straightforward because all the required AWS networking resources that are required for a ROSA cluster will be provisioned for you. The second option is primarily for teams who are familiar with the AWS networking resources required for a ROSA cluster, and have existing automation in place for provisioning (eg. Ansible playbooks, Cloud Foundation templates, etc).
+The first is the most straightforward because all the required AWS networking resources that are necessary for a ROSA cluster will be provisioned for you. The second option is primarily for teams who are familiar with the AWS networking resources required for a ROSA cluster, and have existing automation in place for provisioning (eg. Ansible playbooks, Cloud Foundation templates, etc).
 
 ### ODF Security Group
 
 > **_NOTE:_** This must be done before `rosa create service`
 
-Security group name must be created in the target VPC with the name `odf-sec-group`. Inbound rules need to be added for the following ports / port ranges. The rule type should be "Custom TCP", and the source should be the CIDR of the VPC (eg. 10.0.0.0/16). This will enable any worker nodes from any application cluster running in the VPC to initiate communication with the service cluster.
+An additional security group must be created in order for all worker nodes in the VPC to be able to initiate communication with the service cluster, including inter-node communications within the service cluster.
+
+#### Cloud Formation
+
+For those familiar with the use of Cloud Formation, [this template](https://odf-ms.s3.amazonaws.com/sec-group.json) can be utilized to create a security group.
+
+#### Manual
+
+Security group name must be created in the target VPC with the name `odf-sec-group`.
+
+Inbound rules need to be added for the following ports / port ranges. The rule type should be "Custom TCP", and the source should be the CIDR of the VPC (eg. 10.0.0.0/16).
 
 |Rule Type|Port|Description|
 |---------|----|-----------|
@@ -54,8 +64,6 @@ Security group name must be created in the target VPC with the name `odf-sec-gro
 |Custom TCP|6800-7300|ODF Ceph OSD|
 |Custom TCP|9283|ODF Ceph MGR|
 |Custom TCP|31659|ODF Provisioner API|
-
-For supportability, it is important that these rules be part of a distinct security group.
 
 ## Provisioning ODF Service
 
