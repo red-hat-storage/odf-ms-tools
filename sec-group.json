@@ -1,0 +1,70 @@
+{
+    "AWSTemplateFormatVersion" : "2010-09-09",
+    "Description" : "ODF MS Security Group",
+    "Parameters" : 
+    { 
+    	"VPC" : 
+    	{
+    		"Type" : "AWS::EC2::VPC::Id",
+    		"Description" : "VPC where ODF Managed Service will be used"
+    	},
+    	"CIDR" : 
+    	{
+    		"Type" : "String",
+    		"Description" : "VPC CIDR to for ODF service cluster ingress rules (eg. 10.0.0.0/16)."
+    	}
+    },
+    "Resources" : 
+    {
+    	"ODFMSSG" : 
+    	{
+    		"Type" : "AWS::EC2::SecurityGroup",
+    		"Properties" : 
+    		{
+                        "GroupName": "odf-sec-group",
+    			"GroupDescription" : "ODF Managed Service Security Group",
+    			"VpcId" : { "Ref" : "VPC" },
+                "SecurityGroupIngress" : [
+                    {
+                        "IpProtocol" : "tcp",
+                        "CidrIp" : { "Ref" : "VPCCIDR" },
+                        "FromPort" : "6789",
+                        "ToPort" : "6789"
+                    },
+                    {
+                        "IpProtocol" : "tcp",
+                        "CidrIp" : { "Ref" : "VPCCIDR" },
+                        "FromPort" : "3300",
+                        "ToPort" : "3300"
+                    },
+                    {
+                        "IpProtocol" : "tcp",
+                        "CidrIp" : { "Ref" : "VPCCIDR" },
+                        "FromPort": "6800",
+                        "ToPort" : "7300"
+                    },
+                    {
+                        "IpProtocol" : "tcp",
+                        "CidrIp" : { "Ref" : "VPCCIDR" },
+                        "FromPort" : "9283",
+                        "ToPort" : "9283"
+                    },
+                    {
+                        "IpProtocol" : "tcp",
+                        "CidrIp" : { "Ref" : "VPCCIDR" },
+                        "FromPort" : "31659",
+                        "ToPort" : "31659"
+                    }
+                ]
+                }
+    	}
+    },
+    "Outputs" : 
+    {
+        "SecurityGroupID" : 
+        {
+            "Description" : "Security Group ID",
+            "Value" : { "Ref" : "ODFMSSG" }
+        }
+    }
+}
