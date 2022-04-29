@@ -58,7 +58,8 @@ terraform apply
 ### Service cluster validation key
 
 ```
-VALIDATION_KEY=$(aws kms get-public-key --key-id alias/odf --output text  --query PublicKey 
+VALIDATION_KEY=$(aws kms get-public-key --key-id alias/odf --output text  --query PublicKey)
+echo ${VALIDATION_KEY}
 ```
 ### Service cluster subnets
 
