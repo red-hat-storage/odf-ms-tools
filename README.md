@@ -34,83 +34,131 @@ The ROSA command line utility must be version 1.2.0 or later in order to be able
 
 ### AWS Virtual Private Cloud (VPC)
 
-Currently, testing has been limited to configurations where the ODF service cluster and application cluster reside in the same VPC. There are two primary ways of meeting this requirement:
+Currently, testing has been limited to configurations where the ODF service cluster and application cluster reside in the same VPC. This repo includes Terraform templates to create multiple availability zone VPC with all the requisite AWS networking resources to support ODF service clusters and application clusters. The application clusters can be single or multi-az.
 
-1. Create a multi-az application cluster first, and create the service cluster in the resulting VPC
-2. Create a VPC with all the requisite AWS networking resources
-
-The first is the most straightforward because all the required AWS networking resources that are necessary for a ROSA cluster will be provisioned for you. The second option is primarily for teams who are familiar with the AWS networking resources required for a ROSA cluster, and have existing automation in place for provisioning (eg. Ansible playbooks, Cloud Foundation templates, etc).
-
-### ODF Security Group
-
-> **_NOTE:_** This must be done before `rosa create service`
-
-An additional security group must be created in order for all worker nodes in the VPC to be able to initiate communication with the service cluster, including inter-node communications within the service cluster.
-
-#### Cloud Formation
-
-For those familiar with the use of Cloud Formation, [this template](https://odf-ms.s3.amazonaws.com/sec-group.json) can be utilized to create a security group.
-
-#### Manual
-
-Security group name must be created in the target VPC with the name `odf-sec-group`.
-
-Inbound rules need to be added for the following ports / port ranges. The rule type should be "Custom TCP", and the source should be the CIDR of the VPC (eg. 10.0.0.0/16).
-
-|Rule Type|Port|Description|
-|---------|----|-----------|
-|Custom TCP|6789|ODF Ceph MON v1|
-|Custom TCP|3300|ODF Ceph MON v2|
-|Custom TCP|6800-7300|ODF Ceph OSD|
-|Custom TCP|9283|ODF Ceph MGR|
-|Custom TCP|31659|ODF Provisioner API|
+```
+cd terraform
+terraform init
+terraform plan
+terraform apply
+```
 
 ## Provisioning ODF Service
 
-### Generate RSA key pair
-
-> **_NOTE:_** Not to be confused with SSH credentials.
-
-A public/private key pair needs to be generated to make use of the ODF Managed Service. The public key is passed to the `rosa create service` command that provisions the service cluster. The private key is used to generate tickets for application clusters that will consume storage from the service cluster. You'll want to store the private key somewhere safe and secure since you will need it to generate tickets for future application clusters.
+### Service cluster validation key
 
 ```
-openssl genrsa -out key.pem 4096
-openssl rsa -in key.pem -out pubkey.pem -outform PEM -pubout
+VALIDATION_KEY=$(aws kms get-public-key --key-id alias/odf --output text  --query PublicKey 
 ```
+### Service cluster subnets
 
-### Create service cluster
-
-> **_NOTE:_** At least three subnets must be provided, each in a distinct AWS Availability Zone
+> **_NOTE:_** A public and private subnet is required per availability zone
+> **_NOTE:_** A private subnet is required per availability zone for privatelink clusters
 
 A list of subnets will need to be collected in order to provision a service cluster, they are passed to the `rosa create service` command via the `--subnet-ids` parameter as a comma seperated list.
 
 ```
-export SERVICE_CLUSTER_NAME=odf-ms
 # example subnets
-export SUBNET_IDS="10.0.0.0/24,10.0.1.0/24,10.0.1.0/24"
+export SUBNET_IDS="subnet-abc,subnet-def,subnet-ghi,subnet-jkl,subnet-mno,subnet-pqr"
+```
 
-rosa create service --type ocs-provider \
-  --name $SERVICE_CLUSTER_NAME \
+### Create service cluster
+
+```
+REGION=us-west-2
+rosa create cluster \
+  --cluster-name odf-service \
+  --subnet-ids ${SUBNET_IDS} \
+  --machine-cidr 10.0.0.0/16 \
+  --region ${REGION} \
+  --version=4.10.10 \
+  --multi-az \
+  --compute-nodes 3 \
+  --compute-machine-type m5.4xlarge \
+  --sts \
+  --yes
+
+rosa create operator-roles \
+  --cluster odf-service \
+  --mode auto \
+  --yes
+  
+rosa create oidc-provider \
+  --cluster odf-service \
+  --mode auto \
+  --yes
+```
+### Install `ocs-provider` addon
+
+```
+rosa install addon ocs-provider \
+  -c odf-service \
   --size 20 \
-  --onboarding-validation-key "$(cat pubkey.pem | sed 's/-.* PUBLIC KEY-*//')" \
-  --subnet-ids
+  --unit  Ti \
+  --onboarding-validation-key ${VALIDATION_KEY}
+```
+
+### Check addon installation status
+
+```
+rosa list addons -c $APPLICATION_CLUSTER_NAME
+```
+
+### Create service
+
+As early as next week, `rosa create service` will create the cluster with the `ocs-provisioner` addon preinstalled.
+
+```
+rosa create service \
+  --type ocs-provider \
+  --name odf-service \
+  --size 20 \
+  --unit  Ti \
+  --subnet-ids ${SUBNET_IDS} \
+  --onboarding-validation-key ${VALIDATION_KEY}
+
+rosa create operator-roles \
+  --cluster odf-service \
+  --mode auto \
+  --yes
+  
+rosa create oidc-provider \
+  --cluster odf-service \
+  --mode auto \
+  --yes
 ```
 
 ## Consuming ODF Service
 
 > **_NOTE:_** Check the version of the application cluster against the table [here](#application-cluster-testing-status-by-version)
 
-### Download ticket generation script
+### Create application cluster
+
+> **_NOTE:_** A cluster with workers in a single availability zone can be created by omiting `--multi-az`
 
 ```
-curl -O https://gist.githubusercontent.com/mmgaggle/18123123a37ca0a7dd570502d0bfe441/raw/c97bbd8925cacc3419c3714ca19d0bf1691ab01a/ticketgen.sh
+rosa create cluster \
+  --cluster-name apps \
+  --subnet-ids ${SUBNET_IDS} \
+  --machine-cidr 10.0.0.0/16 \
+  --region us-west-2 \
+  --version=4.10.10 \
+  --multi-az \
+  --compute-nodes 3 \
+  --compute-machine-type m5.4xlarge \
+  --sts \
+  --yes
+
+### Generate onboarding ticket
+
+```
+TICKET=$(bash ./ticketgen.sh)
 ```
 
 ### Install ODF Consumer addon in application cluster
 
 ```
 export APPLICATION_CLUSTER_NAME=mycluster
-TICKET=$(./ticketgen.sh key.pem)
 rosa install addon ocs-consumer \
   -c $APPLICATION_CLUSTER_NAME \
   -size=1 \
