@@ -22,6 +22,8 @@ At the onset OpenShift Data Foundation service clusters are of a fixed size, and
 * Multi-AZ
 * 15x 4TB gp2 EBS volumes will be created (5x per AZ)
 
+Please ensure you have sufficient service quota in AWS. See [ROSA Required AWS Service Quotas](https://docs.openshift.com/rosa/rosa_install_access_delete_clusters/rosa_getting_started_iam/rosa-required-aws-service-quotas.html). With Managed ODF, the minimum General Purpose SSD (gp2) volume storage should be at least 75.
+
 ### Quota
 
 A Red Hat account with appropriate entitlements is a required to create ODF service clusters, or install the ODF consumer addon the. To request entitlements, please provide the output of:
@@ -113,13 +115,14 @@ rosa install addon ocs-provider \
   -c odf-service \
   --size 20 \
   --unit  Ti \
-  --onboarding-validation-key ${VALIDATION_KEY}
+  --onboarding-validation-key ${VALIDATION_KEY} \
+  --yes
 ```
 
 ### Check addon installation status
 
 ```
-rosa list addons -c odf
+rosa list addons -c odf-service
 ```
 
 ### Create service
@@ -201,9 +204,10 @@ aws ec2 describe-instances \
 ```
 rosa install addon ocs-consumer \
   -c apps \
-  -size=1 \
-  --onboarding-ticket=$TICKET \
-  --storage-provider-endpoint=${ANY_PROVIDER_CLUSTER_WORKER_NODE_IP}:31659
+  --size 1 \
+  --onboarding-ticket $TICKET \
+  --storage-provider-endpoint ${ANY_PROVIDER_CLUSTER_WORKER_NODE_IP}:31659 \
+  --yes  
 ```
 
 ### Check addon installation status
