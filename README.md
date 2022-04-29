@@ -57,6 +57,12 @@ terraform apply
 
 ## Provisioning ODF Service
 
+### Email notifications
+
+```
+EMAIL="jane@example.org"
+```
+
 ### Service cluster validation key
 
 ```
@@ -116,6 +122,7 @@ rosa install addon ocs-provider \
   --size 20 \
   --unit  Ti \
   --onboarding-validation-key ${VALIDATION_KEY} \
+  --notification-email-0 "${EMAIL}" \
   --yes
 ```
 
@@ -136,6 +143,7 @@ rosa create service \
   --size 20 \
   --unit  Ti \
   --subnet-ids ${SUBNET_IDS} \
+  --notification-email-0 "${EMAIL}" \
   --onboarding-validation-key ${VALIDATION_KEY}
 
 rosa create operator-roles \
@@ -197,6 +205,8 @@ aws ec2 describe-instances \
   --filters "Name=instance.group-name,Values=odf-sec-group" \
   --query "Reservations[*].Instances[*].[PrivateIpAddress]" \
   --output text
+
+ENDPOINT="<insert ip address>"
 ```
 
 ### Install ODF Consumer addon in application cluster
@@ -206,7 +216,8 @@ rosa install addon ocs-consumer \
   -c apps \
   --size 1 \
   --onboarding-ticket $TICKET \
-  --storage-provider-endpoint ${ANY_PROVIDER_CLUSTER_WORKER_NODE_IP}:31659 \
+  --notification-email-0 "${EMAIL}" \
+  --storage-provider-endpoint ${ENDPOINT}:31659 \
   --yes  
 ```
 
