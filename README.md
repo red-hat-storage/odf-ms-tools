@@ -108,7 +108,7 @@ rosa install addon ocs-provider \
 ### Check addon installation status
 
 ```
-rosa list addons -c $APPLICATION_CLUSTER_NAME
+rosa list addons -c odf
 ```
 
 ### Create service
@@ -155,6 +155,7 @@ rosa create cluster \
   --compute-machine-type m5.4xlarge \
   --sts \
   --yes
+```
 
 ### Generate onboarding ticket
 
@@ -165,9 +166,8 @@ TICKET=$(bash ./ticketgen.sh)
 ### Install ODF Consumer addon in application cluster
 
 ```
-export APPLICATION_CLUSTER_NAME=mycluster
 rosa install addon ocs-consumer \
-  -c $APPLICATION_CLUSTER_NAME \
+  -c apps \
   -size=1 \
   --onboarding-ticket=$TICKET \
   --storage-provider-endpoint=${ANY_PROVIDER_CLUSTER_WORKER_NODE_IP}:31659
