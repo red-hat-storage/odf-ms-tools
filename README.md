@@ -59,6 +59,7 @@ VALIDATION_KEY=$(aws kms get-public-key --key-id alias/odf --output text  --quer
 ### Service cluster subnets
 
 > **_NOTE:_** A public and private subnet is required per availability zone
+
 > **_NOTE:_** A private subnet is required per availability zone for privatelink clusters
 
 A list of subnets will need to be collected in order to provision a service cluster, they are passed to the `rosa create service` command via the `--subnet-ids` parameter as a comma seperated list.
