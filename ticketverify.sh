@@ -53,11 +53,18 @@ PAYLOAD="${TICKET_ARR[0]}"
 SIG="${TICKET_ARR[1]}"
 
 SIG_FILE="$(mktemp)"
+PAYLOAD_FILE="$(mktemp)"
 
 JSON="$(echo "${PAYLOAD}" | base64 -d)"
 echo "${JSON}"
+echo -n ${PAYLOAD} > ${PAYLOAD_FILE}
 echo -n "${SIG}" | base64 -d > "${SIG_FILE}"
-
-echo -n "${JSON}" | openssl dgst -verify "${KEY_FILE}" -signature "${SIG_FILE}"
+aws kms verify \
+  --key-id alias/odf \
+  --message-type RAW \
+  --signing-algorithm RSASSA_PKCS1_V1_5_SHA_512 \
+  --message file://${PAYLOAD_FILE} \
+  --signature file://${SIG_FILE}
 
 rm "${SIG_FILE}"
+rm "${PAYLOAD_FILE}"
