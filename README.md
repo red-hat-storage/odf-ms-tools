@@ -161,6 +161,7 @@ rosa create cluster \
 
 ```
 TICKET=$(bash ./ticketgen.sh)
+echo ${TICKET}
 ```
 
 ### Install ODF Consumer addon in application cluster
