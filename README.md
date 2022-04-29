@@ -30,7 +30,7 @@ A Red Hat account with appropriate entitlements is a required to create ODF serv
 rosa whoami
 ```
 
-To verify entitlements, you can run the following (look for ocs-provider and ocs-consumer addons)
+To verify entitlements, you can run the following. Look for ocs-provider and ocs-consumer addons, if they are not present, you do not have the appropriate entitlements.
 
 ```
 rosa list addons
@@ -44,7 +44,7 @@ The ROSA command line utility must be version 1.2.0 or later in order to be able
 
 ### AWS Virtual Private Cloud (VPC)
 
-Currently, testing has been limited to configurations where the ODF service cluster and application cluster reside in the same VPC. This repo includes Terraform templates to create multiple availability zone VPC with all the requisite AWS networking resources to support ODF service clusters and application clusters. The application clusters can be single or multi-az.
+Currently, testing has been limited to configurations where the ODF service cluster and application cluster reside in the same VPC. This repo includes Terraform templates to create a multiple availability zone VPC with all the requisite AWS networking resources to support ODF service clusters and application clusters. The application clusters can be single or multi-az.
 
 ```
 cd terraform
@@ -101,9 +101,9 @@ rosa create oidc-provider \
 ```
 ### Security group
 
-Add `odf-sec-group` security group to service cluster worker instances. This can be done via the AWS CLI or console.
+Add the `odf-sec-group` security group created by Terraform to service cluster worker instances. This can be done via the AWS CLI or console.
 
-### Install `ocs-provider` addon
+### Install provider addon
 
 > **_NOTE:_** This will fail if workers are not in the `odf-sec-group` security group
 
@@ -168,12 +168,12 @@ rosa create cluster \
 
 
 rosa create operator-roles \
-  --cluster app \
+  --cluster apps \
   --mode auto \
   --yes
   
 rosa create oidc-provider \
-  --cluster app \
+  --cluster apps \
   --mode auto \
   --yes
 ```
