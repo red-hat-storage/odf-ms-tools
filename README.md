@@ -26,6 +26,12 @@ At the onset OpenShift Data Foundation service clusters are of a fixed size, and
 
 A Red Hat account with appropriate entitlements is a required to create ODF service clusters, or install the ODF consumer addon the. To request entitlements, please provide the output of `rosa whoami`
 
+To verify entitlements, you can run the following (look for ocs-provider and ocs-consumer addons)
+
+```
+rosa list addons
+```
+
 ## Prerequisites
 
 ### ROSA Command Line Utility
