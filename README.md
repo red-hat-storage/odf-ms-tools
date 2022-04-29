@@ -95,7 +95,13 @@ rosa create oidc-provider \
   --mode auto \
   --yes
 ```
+### Security group
+
+Add `odf-sec-group` security group to service cluster worker instances. This can be done via the AWS CLI or console.
+
 ### Install `ocs-provider` addon
+
+> **_NOTE:_** This will fail if workers are not in the `odf-sec-group` security group
 
 ```
 rosa install addon ocs-provider \
@@ -113,7 +119,7 @@ rosa list addons -c odf
 
 ### Create service
 
-As early as next week, `rosa create service` will create the cluster with the `ocs-provisioner` addon preinstalled.
+As early as next week, `rosa create service` will create the cluster with the `ocs-provisioner` addon preinstalled. This will also automatically add the `odf-sec-group` security group to service cluster instances via the Machine API.
 
 ```
 rosa create service \
@@ -155,6 +161,17 @@ rosa create cluster \
   --compute-machine-type m5.4xlarge \
   --sts \
   --yes
+
+
+rosa create operator-roles \
+  --cluster app \
+  --mode auto \
+  --yes
+  
+rosa create oidc-provider \
+  --cluster app \
+  --mode auto \
+  --yes
 ```
 
 ### Generate onboarding ticket
@@ -162,6 +179,16 @@ rosa create cluster \
 ```
 TICKET=$(bash ./ticketgen.sh)
 echo ${TICKET}
+```
+
+### Find a woker node IP on service cluster
+
+```
+aws ec2 describe-instances \
+  --region 'us-west-2' \
+  --filters "Name=instance.group-name,Values=odf-sec-group" \
+  --query "Reservations[*].Instances[*].[PrivateIpAddress]" \
+  --output text
 ```
 
 ### Install ODF Consumer addon in application cluster
