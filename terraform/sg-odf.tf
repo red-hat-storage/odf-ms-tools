@@ -1,7 +1,11 @@
 resource "aws_security_group" "odf_sg" {
-  name        = "osd-sec-group"
+  name        = "odf-sec-group"
   vpc_id      = aws_vpc.site.id
   description = "ODF Security Group"
+
+  tags = {
+    Name = "odf-sec-group"
+  }
 
   timeouts {
     create = "20m"
