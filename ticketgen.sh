@@ -38,7 +38,7 @@ echo -n "{${JSON}}" | base64 > ${MESSAGE_FILE}
 SIG="$(aws kms sign \
   --key-id alias/odf \
   --message-type RAW \
-  --signing-algorithm RSASSA_PKCS1_V1_5_SHA_512 \
+  --signing-algorithm RSASSA_PKCS1_V1_5_SHA_256 \
   --output text \
   --query Signature \
   --message file://${MESSAGE_FILE} | base64 | tr -d "\n")"
