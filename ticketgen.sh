@@ -41,6 +41,6 @@ SIG="$(aws kms sign \
   --signing-algorithm RSASSA_PKCS1_V1_5_SHA_256 \
   --output text \
   --query Signature \
-  --message file://${MESSAGE_FILE} | base64 | tr -d "\n")"
+  --message fileb://${MESSAGE_FILE} )"
 cat <<< "${PAYLOAD}.${SIG}"
 rm "${MESSAGE_FILE}"

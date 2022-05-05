@@ -62,7 +62,7 @@ echo -n "${SIG}" | base64 -d > "${SIG_FILE}"
 aws kms verify \
   --key-id alias/odf \
   --message-type RAW \
-  --signing-algorithm RSASSA_PKCS1_V1_5_SHA_512 \
+  --signing-algorithm RSASSA_PKCS1_V1_5_SHA_256 \
   --message file://${PAYLOAD_FILE} \
   --signature file://${SIG_FILE}
 
