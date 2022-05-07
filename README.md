@@ -175,5 +175,5 @@ rosa install addon ocs-consumer \
 ### Check addon installation status
 
 ```
-rosa list addons -c $APPLICATION_CLUSTER_NAME
+rosa list addons -c apps
 ```
