@@ -165,6 +165,7 @@ ENDPOINT="<insert ip address>"
 rosa install addon ocs-consumer \
   -c apps \
   --size 1 \
+  --unit Ti \
   --onboarding-ticket $TICKET \
   --notification-email-0 "${EMAIL}" \
   --storage-provider-endpoint ${ENDPOINT}:31659 \
