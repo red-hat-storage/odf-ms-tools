@@ -82,56 +82,6 @@ A list of subnets will need to be collected in order to provision a service clus
 export SUBNET_IDS="subnet-abc,subnet-def,subnet-ghi,subnet-jkl,subnet-mno,subnet-pqr"
 ```
 
-### Create service cluster
-
-```
-REGION=us-west-2
-rosa create cluster \
-  --cluster-name odf-service \
-  --subnet-ids ${SUBNET_IDS} \
-  --machine-cidr 10.0.0.0/16 \
-  --region ${REGION} \
-  --version=4.10.10 \
-  --multi-az \
-  --compute-nodes 3 \
-  --compute-machine-type m5.4xlarge \
-  --sts \
-  --yes
-
-rosa create operator-roles \
-  --cluster odf-service \
-  --mode auto \
-  --yes
-  
-rosa create oidc-provider \
-  --cluster odf-service \
-  --mode auto \
-  --yes
-```
-### Security group
-
-Add the `odf-sec-group` security group created by Terraform to service cluster worker instances. This can be done via the AWS CLI or console.
-
-### Install provider addon
-
-> **_NOTE:_** This will fail if workers are not in the `odf-sec-group` security group
-
-```
-rosa install addon ocs-provider \
-  -c odf-service \
-  --size 20 \
-  --unit  Ti \
-  --onboarding-validation-key ${VALIDATION_KEY} \
-  --notification-email-0 "${EMAIL}" \
-  --yes
-```
-
-### Check addon installation status
-
-```
-rosa list addons -c odf-service
-```
-
 ### Create service
 
 As early as next week, `rosa create service` will create the cluster with the `ocs-provisioner` addon preinstalled. This will also automatically add the `odf-sec-group` security group to service cluster instances via the Machine API.
