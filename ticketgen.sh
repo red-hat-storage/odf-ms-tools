@@ -34,7 +34,7 @@ add_var "expirationDate" "${EXPIRATION_DATE}"
 PAYLOAD="$(echo -n "{${JSON}}" | base64 | tr -d "\n")"
 MESSAGE_FILE="$(mktemp)"
 
-echo -n "{${JSON}}" | base64 > ${MESSAGE_FILE}
+echo -n "{${JSON}}" > ${MESSAGE_FILE}
 SIG="$(aws kms sign \
   --key-id alias/odf \
   --message-type RAW \

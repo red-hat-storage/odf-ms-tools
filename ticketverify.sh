@@ -53,18 +53,16 @@ PAYLOAD="${TICKET_ARR[0]}"
 SIG="${TICKET_ARR[1]}"
 
 SIG_FILE="$(mktemp)"
-PAYLOAD_FILE="$(mktemp)"
+MESSAGE_FILE="$(mktemp)"
 
-JSON="$(echo "${PAYLOAD}" | base64 -d)"
-echo "${JSON}"
-echo -n ${PAYLOAD} > ${PAYLOAD_FILE}
+echo "${PAYLOAD}" > ${MESSAGE_FILE}
 echo -n "${SIG}" | base64 -d > "${SIG_FILE}"
 aws kms verify \
   --key-id alias/odf \
   --message-type RAW \
   --signing-algorithm RSASSA_PKCS1_V1_5_SHA_256 \
-  --message file://${PAYLOAD_FILE} \
-  --signature file://${SIG_FILE}
+  --message file://${MESSAGE_FILE} \
+  --signature fileb://${SIG_FILE}
 
 rm "${SIG_FILE}"
-rm "${PAYLOAD_FILE}"
+rm "${MESSAGE_FILE}"
