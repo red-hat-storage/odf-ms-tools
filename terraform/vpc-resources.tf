@@ -1,5 +1,5 @@
 resource "aws_vpc" "site" {
-  cidr_block           = "10.0.0.0/16"
+  cidr_block           = var.vpc_cidr
   enable_dns_support   = true
   enable_dns_hostnames = true
   tags = {
@@ -16,7 +16,7 @@ resource "aws_subnet" "public" {
   count = var.subnet_count
 
   vpc_id            = aws_vpc.site.id
-  cidr_block        = cidrsubnet("10.0.0.0/16", var.subnet_count * 2, count.index)
+  cidr_block        = cidrsubnet(var.vpc_cidr, var.subnet_count * 2, count.index)
   availability_zone = data.aws_availability_zones.available.names[count.index % length(data.aws_availability_zones.available.names)]
   tags = {
     Name = join("-", [var.site_name, "subnet", "public${count.index + 1}", data.aws_availability_zones.available.names[count.index % length(data.aws_availability_zones.available.names)]])
@@ -27,7 +27,7 @@ resource "aws_subnet" "private" {
   count = var.subnet_count
 
   vpc_id            = aws_vpc.site.id
-  cidr_block        = cidrsubnet("10.0.0.0/16", var.subnet_count * 2, count.index + var.subnet_count)
+  cidr_block        = cidrsubnet(var.vpc_cidr, var.subnet_count * 2, count.index + var.subnet_count)
   availability_zone = data.aws_availability_zones.available.names[count.index % length(data.aws_availability_zones.available.names)]
   tags = {
     Name = join("-", [var.site_name, "subnet", "private${count.index + 1}", data.aws_availability_zones.available.names[count.index % length(data.aws_availability_zones.available.names)]])
